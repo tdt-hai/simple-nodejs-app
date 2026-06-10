@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  app:
+    image: ${IMAGE_NAME:-tdthai/simple-nodejs-app}:${IMAGE_TAG}
+    build: .
+    container_name: simple-nodejs-app
+    ports:
+      - "8080:8080"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8080
+    restart: always
