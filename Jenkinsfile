@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     environment {
-        // ── GitHub Registry ──────────────────────────────────────────────
-        GITHUB_REGISTRY   = "ghcr.io"
-        GITHUB_PROJECT    = "tdt-hai/simple-nodejs-app"
-        IMAGE_NAME        = "${GITHUB_REGISTRY}/${GITHUB_PROJECT}"
+        // ── Docker Hub Registry ──────────────────────────────────────────────
+        // Thay bằng username Docker Hub của bạn
+        DOCKER_HUB_USER   = "tdthai"
+        IMAGE_NAME        = "${DOCKER_HUB_USER}/simple-nodejs-app"
         IMAGE_TAG         = "${(env.GIT_BRANCH ?: env.BRANCH_NAME ?: 'local').replaceFirst('^origin/', '').replaceAll('/', '-')}-${env.BUILD_NUMBER}-${env.GIT_COMMIT?.take(7) ?: 'local'}"
 
-        // Credential ID lưu trong Jenkins (username = github username, password = github pat)
-        REGISTRY_CREDS    = "github-credentials"
+        // Credential ID lưu trong Jenkins (username = docker hub username, password = docker hub pat/password)
+        REGISTRY_CREDS    = "dockerhub"
 
         // ── App / Deploy ─────────────────────────────────────────────────
         APP_PORT          = "8080"
@@ -98,23 +98,24 @@ pipeline {
             }
         }
 
-        // ── 4. IMAGE PUSH to GitHub Registry ─────────────────────────────
+        // ── 4. IMAGE PUSH to Docker Hub ──────────────────────────────────
         stage("Image Push") {
             steps {
-                echo "Pushing image to GitHub Container Registry..."
+                echo "Pushing image to Docker Hub..."
                 withCredentials([usernamePassword(
                     credentialsId: "${REGISTRY_CREDS}",
                     usernameVariable: "REG_USER",
                     passwordVariable: "REG_PASS"
                 )]) {
                     sh """
-                        echo "${REG_PASS}" | docker login ${GITHUB_REGISTRY} \
+                        # Không truyền tên registry thì mặc định là Docker Hub (docker.io)
+                        echo "${REG_PASS}" | docker login \
                             --username "${REG_USER}" \
                             --password-stdin
 
                         docker push ${IMAGE_NAME}:${IMAGE_TAG}
 
-                        docker logout ${GITHUB_REGISTRY}
+                        docker logout
                     """
                 }
             }
@@ -166,18 +167,18 @@ pipeline {
                     passwordVariable: "REG_PASS"
                 )]) {
                     sh """
-                        # Đăng nhập registry
-                        echo "${REG_PASS}" | docker login ${GITHUB_REGISTRY} \
+                        # Đăng nhập Docker Hub
+                        echo "${REG_PASS}" | docker login \
                             --username "${REG_USER}" \
                             --password-stdin
 
                         # Đánh tag latest từ image vừa chạy thành công
                         docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
 
-                        # Push latest lên
+                        # Push latest lên Docker Hub
                         docker push ${IMAGE_NAME}:latest
 
-                        docker logout ${GITHUB_REGISTRY}
+                        docker logout
                     """
                 }
             }
