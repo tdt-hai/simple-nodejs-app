@@ -2,7 +2,7 @@ pipeline {
     agent { label 'local-agent' }
 
     environment {
-        // ── Docker Hub Registry ──────────────────────────────────────────────
+        // ── Docker Hub Registry 
         // Thay bằng username Docker Hub của bạn
         DOCKER_HUB_USER   = "tdthai"
         IMAGE_NAME        = "${DOCKER_HUB_USER}/simple-nodejs-app"
