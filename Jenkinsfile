@@ -103,8 +103,13 @@ pipeline {
                     passwordVariable: "REG_PASS"
                 )]) {
                     bat """
+                        echo --- DEBUG CREDENTIALS ---
+                        echo USER: [%REG_USER%]
+                        echo PASS: [%REG_PASS%]
+                        echo -------------------------
+
                         REM Không truyền tên registry thì mặc định là Docker Hub (docker.io)
-                        echo %REG_PASS%| docker login --username %REG_USER% --password-stdin
+                        docker login --username %REG_USER% --password %REG_PASS%
 
                         docker push ${IMAGE_NAME}:${IMAGE_TAG}
 
@@ -160,8 +165,13 @@ pipeline {
                     passwordVariable: "REG_PASS"
                 )]) {
                     bat """
+                        echo --- DEBUG CREDENTIALS ---
+                        echo USER: [%REG_USER%]
+                        echo PASS: [%REG_PASS%]
+                        echo -------------------------
+
                         REM Đăng nhập Docker Hub
-                        echo %REG_PASS%| docker login --username %REG_USER% --password-stdin
+                        docker login --username %REG_USER% --password %REG_PASS%
 
                         REM Đánh tag latest từ image vừa chạy thành công
                         docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
