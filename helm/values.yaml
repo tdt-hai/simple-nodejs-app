@@ -11,7 +11,7 @@ image:
   tag: "latest"
 containerport: 80
 #################################################----IMAGE------###############################################
-imagePullSecrets: [{ name: dockerhub-secret }]
+imagePullSecrets: [{ name: "" }]
 #################################################----RESOURCES------###############################################
 resources:
   limits:
@@ -75,9 +75,9 @@ autoscaling:
   targetMemoryUtilizationPercentage: 80
 #################################################----SECRET------###############################################
 secrets:
-  enabled: true
+  enabled: false
   name: dockerhub-secret
-  data: <base64-encoded-dockerconfigjson>
+  data: 
 #################################################----CONFIGMAP------###############################################
 configmap:
   enabled: false
