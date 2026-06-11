@@ -194,21 +194,22 @@ pipeline {
                 echo "Deploying to Kubernetes via Helm chart..."
                 bat """
                     helm upgrade --install simple-nodejs-app ./helm ^
+                        --namespace nodejs --create-namespace ^
                         --set image.repository=${IMAGE_NAME} ^
                         --set image.tag=${IMAGE_TAG} ^
-                        --force-replace --wait --timeout 120s
+                        --force --wait --timeout 120s
                 """
             }
             post {
                 success {
                     echo "✅ Helm deploy succeeded!"
-                    bat "kubectl get rollouts"
-                    bat "kubectl get svc"
-                    bat "kubectl get ingress"
+                    bat "kubectl get rollouts -n nodejs"
+                    bat "kubectl get svc -n nodejs"
+                    bat "kubectl get ingress -n nodejs"
                 }
                 failure {
                     echo "❌ Helm deploy FAILED – rolling back..."
-                    bat "helm rollback simple-nodejs-app 0 || exit 0"
+                    bat "helm rollback simple-nodejs-app 0 -n nodejs || exit 0"
                 }
             }
         }
