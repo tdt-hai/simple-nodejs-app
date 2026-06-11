@@ -10,10 +10,6 @@ pipeline {
 
         // Credential ID lưu trong Jenkins (username = docker hub username, password = docker hub pat/password)
         REGISTRY_CREDS    = "dockerhub"
-
-        // ── App / Deploy ─────────────────────────────────────────────────
-        APP_PORT          = "8080"
-        CONTAINER_NAME    = "simple-nodejs-app"
     }
 
     options {
@@ -123,7 +119,7 @@ pipeline {
             }
         }
 
-        // ── 5. DEPLOY MOCK ────────────────────────────────────────────────
+        // ── 5. DEPLOY 
         stage("Deploy") {
             steps {
                 echo "Deploying container using docker compose..."

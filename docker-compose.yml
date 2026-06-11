@@ -6,8 +6,8 @@ services:
     build: .
     container_name: simple-nodejs-app
     ports:
-      - "8080:8080"
+      - "80:80"
     environment:
       - HOST=0.0.0.0
-      - PORT=8080
+      - PORT=80
     restart: always
