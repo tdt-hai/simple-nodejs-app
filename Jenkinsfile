@@ -196,7 +196,7 @@ pipeline {
                     helm upgrade --install simple-nodejs-app ./helm ^
                         --set image.repository=${IMAGE_NAME} ^
                         --set image.tag=${IMAGE_TAG} ^
-                        --wait --timeout 120s
+                        --force --wait --timeout 120s
                 """
             }
             post {
