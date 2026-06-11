@@ -33,7 +33,7 @@ pipeline {
             steps {
                 echo "Checking out source code..."
                 checkout scm
-                sh "git log -1 --oneline"
+                bat "git log -1 --oneline"
             }
         }
 
@@ -44,10 +44,10 @@ pipeline {
                 stage("Build") {
                     steps {
                         echo "Building application..."
-                        sh """
-                            echo '--- BUILD MOCK ---'
-                            echo 'npm ci && npm run build'
-                            echo 'Build completed successfully .'
+                        bat """
+                            echo "--- BUILD MOCK ---"
+                            echo "npm ci && npm run build"
+                            echo "Build completed successfully ."
                         """
                     }
                     post {
@@ -60,10 +60,10 @@ pipeline {
                 stage("Test") {
                     steps {
                         echo "Running tests..."
-                        sh """
-                            echo '--- TEST MOCK ---'
-                            echo 'npm test -- --ci'
-                            echo 'All tests passed.'
+                        bat """
+                            echo "--- TEST MOCK ---"
+                            echo "npm test -- --ci"
+                            echo "All tests passed."
                         """
                     }
                     post {
@@ -85,15 +85,14 @@ pipeline {
         stage("Docker Build") {
             steps {
                 echo "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
-                sh """
-                    docker build \
-                        -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                bat """
+                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
                 """
             }
             post {
                 failure {
                     echo "Docker build FAILED – cleaning up dangling images..."
-                    sh "docker image prune -f || true"
+                    bat "docker image prune -f || exit 0"
                 }
             }
         }
@@ -107,11 +106,9 @@ pipeline {
                     usernameVariable: "REG_USER",
                     passwordVariable: "REG_PASS"
                 )]) {
-                    sh """
-                        # Không truyền tên registry thì mặc định là Docker Hub (docker.io)
-                        echo "${REG_PASS}" | docker login \
-                            --username "${REG_USER}" \
-                            --password-stdin
+                    bat """
+                        REM Không truyền tên registry thì mặc định là Docker Hub (docker.io)
+                        echo %REG_PASS%| docker login --username %REG_USER% --password-stdin
 
                         docker push ${IMAGE_NAME}:${IMAGE_TAG}
 
@@ -130,15 +127,15 @@ pipeline {
         stage("Deploy") {
             steps {
                 echo "Deploying container using docker compose..."
-                sh """
-                    export IMAGE_NAME=${IMAGE_NAME}
-                    export IMAGE_TAG=${IMAGE_TAG}
+                bat """
+                    set IMAGE_NAME=${IMAGE_NAME}
+                    set IMAGE_TAG=${IMAGE_TAG}
 
-                    # Kéo image mới về (nếu dùng registry, còn build local thì bỏ qua bước pull)
-                    # docker compose pull || true
+                    REM Kéo image mới về (nếu dùng registry, còn build local thì bỏ qua bước pull)
+                    REM docker compose pull || exit 0
 
-                    # Dừng & xoá container cũ và chạy lại container mới
-                    docker compose down || true
+                    REM Dừng & xoá container cũ và chạy lại container mới
+                    docker compose down || exit 0
                     docker compose up -d
 
                     echo "Container is running with docker compose"
@@ -148,11 +145,11 @@ pipeline {
             post {
                 failure {
                     echo "Deploy FAILED – rolling back to previous stable release (latest)..."
-                    sh """
-                        export IMAGE_NAME=${IMAGE_NAME}
-                        export IMAGE_TAG=latest
-                        docker compose down || true
-                        docker compose up -d || true
+                    bat """
+                        set IMAGE_NAME=${IMAGE_NAME}
+                        set IMAGE_TAG=latest
+                        docker compose down || exit 0
+                        docker compose up -d || exit 0
                     """
                 }
             }
@@ -166,16 +163,14 @@ pipeline {
                     usernameVariable: "REG_USER",
                     passwordVariable: "REG_PASS"
                 )]) {
-                    sh """
-                        # Đăng nhập Docker Hub
-                        echo "${REG_PASS}" | docker login \
-                            --username "${REG_USER}" \
-                            --password-stdin
+                    bat """
+                        REM Đăng nhập Docker Hub
+                        echo %REG_PASS%| docker login --username %REG_USER% --password-stdin
 
-                        # Đánh tag latest từ image vừa chạy thành công
+                        REM Đánh tag latest từ image vừa chạy thành công
                         docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
 
-                        # Push latest lên Docker Hub
+                        REM Push latest lên Docker Hub
                         docker push ${IMAGE_NAME}:latest
 
                         docker logout
@@ -207,7 +202,7 @@ pipeline {
         always {
             echo "Cleaning up workspace..."
             // Xoá image local sau build để tiết kiệm disk (tuỳ chọn)
-            sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
+            bat "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || exit 0"
             cleanWs()
         }
     }
