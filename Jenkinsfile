@@ -197,7 +197,7 @@ pipeline {
                         --namespace nodejs --create-namespace ^
                         --set image.repository=${IMAGE_NAME} ^
                         --set image.tag=${IMAGE_TAG} ^
-                        --force --wait --timeout 120s
+                        --force-replace --wait --timeout 120s
                 """
             }
             post {
