@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'local-agent' }  // label của node bạn đặt
+    agent { label 'local-agent' }
 
     environment {
         // ── Docker Hub Registry ──────────────────────────────────────────────
