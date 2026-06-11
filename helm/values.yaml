@@ -1,0 +1,84 @@
+# Các giá trị mặc định cho việc triển khai ứng dụng Simple Node.js
+selector: nodejs-app-production
+#################################################----ROLLOUTS------###############################################
+rollouts:
+  name: nodejs-app-rollout
+replicaCount: 2
+revisionHistoryLimit: 1
+image:
+  repository: tdthai/simple-nodejs-app
+  pullPolicy: IfNotPresent
+  tag: "latest"
+containerport: 80
+#################################################----IMAGE------###############################################
+imagePullSecrets: [{ name: dockerhub-secret }]
+#################################################----RESOURCES------###############################################
+resources:
+  limits:
+    cpu: 200m
+    memory: 200Mi
+  requests:
+    cpu: 100m
+    memory: 100Mi
+securityContext: {}
+volumes: {}
+volumeMounts: {}
+nodeSelector: {}
+#################################################----SERVICE------###############################################
+service:
+  service:
+    name: nodejs-app-svc
+    type: ClusterIP
+    port: 80
+    targetport: 80
+  servicepreview:
+    name: nodejs-app-svc-preview
+    type: ClusterIP
+    port: 80
+    targetport: 80
+#################################################----INGRESS------###############################################
+ingress:
+  enabled: true
+  name: nodejs-app-ingress
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+  hosts:
+    - host: nodejs.local
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: "nodejs-app-svc"
+              port:
+                number: 80
+    - host: preview-nodejs.local
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: "nodejs-app-svc-preview"
+              port:
+                number: 80
+  tls: []
+#################################################----AUTOSCALING------###############################################
+autoscaling:
+  enabled: false
+  name: nodejs-app-hpa
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+#################################################----SECRET------###############################################
+secrets:
+  enabled: true
+  name: dockerhub-secret
+  data: <base64-encoded-dockerconfigjson>
+#################################################----CONFIGMAP------###############################################
+configmap:
+  enabled: false
+  name: nodejs-app-config

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.service.name }}
+  labels:
+    {{- include "nodejs.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ .Values.selector }}
+  type: {{ .Values.service.service.type }}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.service.service.port }}
+      targetPort: {{ .Values.service.service.targetport }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.servicepreview.name }}
+  labels:
+    {{- include "nodejs.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ .Values.selector }}
+  type: {{ .Values.service.servicepreview.type }}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.service.servicepreview.port }}
+      targetPort: {{ .Values.service.servicepreview.targetport }}

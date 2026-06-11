@@ -124,37 +124,37 @@ pipeline {
             }
         }
 
-        // ── 5. DEPLOY 
-        stage("Deploy") {
-            steps {
-                echo "Deploying container using docker compose..."
-                bat """
-                    set IMAGE_NAME=${IMAGE_NAME}
-                    set IMAGE_TAG=${IMAGE_TAG}
+        // ── 5. DEPLOY docker(tắt làm lab k8s)
+        // stage("Deploy") {
+        //     steps {
+        //         echo "Deploying container using docker compose..."
+        //         bat """
+        //             set IMAGE_NAME=${IMAGE_NAME}
+        //             set IMAGE_TAG=${IMAGE_TAG}
 
-                    REM Kéo image mới về (nếu dùng registry, còn build local thì bỏ qua bước pull)
-                    REM docker compose pull || exit 0
+        //             REM Kéo image mới về (nếu dùng registry, còn build local thì bỏ qua bước pull)
+        //             REM docker compose pull || exit 0
 
-                    REM Dừng & xoá container cũ và chạy lại container mới
-                    docker compose down || exit 0
-                    docker compose up -d
+        //             REM Dừng & xoá container cũ và chạy lại container mới
+        //             docker compose down || exit 0
+        //             docker compose up -d
 
-                    echo "Container is running with docker compose"
-                    docker compose ps
-                """
-            }
-            post {
-                failure {
-                    echo "Deploy FAILED – rolling back to previous stable release (latest)..."
-                    bat """
-                        set IMAGE_NAME=${IMAGE_NAME}
-                        set IMAGE_TAG=latest
-                        docker compose down || exit 0
-                        docker compose up -d || exit 0
-                    """
-                }
-            }
-        }
+        //             echo "Container is running with docker compose"
+        //             docker compose ps
+        //         """
+        //     }
+        //     post {
+        //         failure {
+        //             echo "Deploy FAILED – rolling back to previous stable release (latest)..."
+        //             bat """
+        //                 set IMAGE_NAME=${IMAGE_NAME}
+        //                 set IMAGE_TAG=latest
+        //                 docker compose down || exit 0
+        //                 docker compose up -d || exit 0
+        //             """
+        //         }
+        //     }
+        // }
         // ── 6. PROMOTE TO LATEST ──────────────────────────────────────────
         stage("Promote to Latest") {
             steps {
@@ -181,6 +181,31 @@ pipeline {
 
                         docker logout
                     """
+                }
+            }
+        }
+
+        // ── 7. DEPLOY K8S (Helm) ─────────────────────────────────────────
+        stage("Deploy K8s") {
+            steps {
+                echo "Deploying to Kubernetes via Helm chart..."
+                bat """
+                    helm upgrade --install simple-nodejs-app ./helm ^
+                        --set image.repository=${IMAGE_NAME} ^
+                        --set image.tag=${IMAGE_TAG} ^
+                        --wait --timeout 120s
+                """
+            }
+            post {
+                success {
+                    echo "✅ Helm deploy succeeded!"
+                    bat "kubectl get rollouts"
+                    bat "kubectl get svc"
+                    bat "kubectl get ingress"
+                }
+                failure {
+                    echo "❌ Helm deploy FAILED – rolling back..."
+                    bat "helm rollback simple-nodejs-app 0 || exit 0"
                 }
             }
         }
