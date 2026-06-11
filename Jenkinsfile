@@ -10,6 +10,9 @@ pipeline {
 
         // Credential ID lưu trong Jenkins (username = docker hub username, password = docker hub pat/password)
         REGISTRY_CREDS    = "dockerhub"
+
+        // Thêm đường dẫn helm, kubectl vào PATH cho Jenkins Agent
+        PATH = "C:\\Users\\ThanhHai-PC\\AppData\\Local\\Microsoft\\WinGet\\Links;${env.PATH}"
     }
 
     options {
