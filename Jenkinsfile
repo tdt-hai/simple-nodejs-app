@@ -158,35 +158,35 @@ pipeline {
         //         }
         //     }
         // }
-        // ── 6. PROMOTE TO LATEST ──────────────────────────────────────────
-        stage("Promote to Latest") {
-            steps {
-                echo "Deploy succeeded! Tagging current image as 'latest' and pushing..."
-                withCredentials([usernamePassword(
-                    credentialsId: "${REGISTRY_CREDS}",
-                    usernameVariable: "REG_USER",
-                    passwordVariable: "REG_PASS"
-                )]) {
-                    bat """
-                        echo --- DEBUG CREDENTIALS ---
-                        echo USER: [%REG_USER%]
-                        echo PASS: [%REG_PASS%]
-                        echo -------------------------
+        // ── 6. PROMOTE TO LATEST (tắt làm lab k8s)
+        // stage("Promote to Latest") {
+        //     steps {
+        //         echo "Deploy succeeded! Tagging current image as 'latest' and pushing..."
+        //         withCredentials([usernamePassword(
+        //             credentialsId: "${REGISTRY_CREDS}",
+        //             usernameVariable: "REG_USER",
+        //             passwordVariable: "REG_PASS"
+        //         )]) {
+        //             bat """
+        //                 echo --- DEBUG CREDENTIALS ---
+        //                 echo USER: [%REG_USER%]
+        //                 echo PASS: [%REG_PASS%]
+        //                 echo -------------------------
 
-                        REM Đăng nhập Docker Hub
-                        docker login --username %REG_USER% --password %REG_PASS%
+        //                 REM Đăng nhập Docker Hub
+        //                 docker login --username %REG_USER% --password %REG_PASS%
 
-                        REM Đánh tag latest từ image vừa chạy thành công
-                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+        //                 REM Đánh tag latest từ image vừa chạy thành công
+        //                 docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
 
-                        REM Push latest lên Docker Hub
-                        docker push ${IMAGE_NAME}:latest
+        //                 REM Push latest lên Docker Hub
+        //                 docker push ${IMAGE_NAME}:latest
 
-                        docker logout
-                    """
-                }
-            }
-        }
+        //                 docker logout
+        //             """
+        //         }
+        //     }
+        // }
 
         // ── 7. DEPLOY K8S (Helm + Argo Rollouts Blue-Green) ────────────────
         stage("Deploy K8s") {
