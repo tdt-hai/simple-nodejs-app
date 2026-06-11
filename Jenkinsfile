@@ -27,7 +27,7 @@ pipeline {
 
     stages {
 
-        // ── 1. CHECKOUT ───────────────────────────────────────────────────
+        // ── 1. CHECKOUT ──────────────────────────────────────────────────
         stage("Checkout") {
             steps {
                 echo "Checking out source code..."
