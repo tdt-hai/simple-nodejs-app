@@ -44,6 +44,26 @@ spec:
               value: "0.0.0.0"
             - name: PORT
               value: "80"
+          # livenessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: 8088
+          #     scheme: HTTP
+          #   initialDelaySeconds: 300
+          #   timeoutSeconds: 10
+          #   periodSeconds: 30
+          #   successThreshold: 1
+          #   failureThreshold: 3
+          # readinessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: 8088
+          #     scheme: HTTP
+          #   initialDelaySeconds: 30
+          #   timeoutSeconds: 10
+          #   periodSeconds: 20
+          #   successThreshold: 1
+          #   failureThreshold: 3
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- with .Values.volumeMounts }}
