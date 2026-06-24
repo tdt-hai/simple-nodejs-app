@@ -186,39 +186,39 @@ pipeline {
             }
         }
 
-        // // ── 7. DEPLOY K8S (Helm + Argo Rollouts Blue-Green) ────────────────
-        // stage("Deploy K8s") {
-        //     steps {
-        //         echo "Deploying to Kubernetes via Helm + Argo Rollouts (Blue-Green, zero-downtime)..."
+        // ── 7. DEPLOY K8S (Helm + Argo Rollouts Blue-Green) ────────────────
+        stage("Deploy K8s") {
+            steps {
+                echo "Deploying to Kubernetes via Helm + Argo Rollouts (Blue-Green, zero-downtime)..."
 
-        //         // Helm upgrade: lần đầu sẽ install, lần sau chỉ update image tag
-        //         // Argo Rollouts tự động tạo preview ReplicaSet mới (green)
-        //         // autoPromotionEnabled=true → tự promote active sau khi green healthy
-        //         bat """
-        //             helm upgrade --install simple-nodejs-app ./helm ^
-        //                 --namespace nodejs --create-namespace ^
-        //                 --set image.repository=${IMAGE_NAME} ^
-        //                 --set image.tag=${IMAGE_TAG} ^
-        //                 --timeout 120s
-        //         """
+                // Helm upgrade: lần đầu sẽ install, lần sau chỉ update image tag
+                // Argo Rollouts tự động tạo preview ReplicaSet mới (green)
+                // autoPromotionEnabled=true → tự promote active sau khi green healthy
+                bat """
+                    helm upgrade --install simple-nodejs-app ./helm ^
+                        --namespace nodejs --create-namespace ^
+                        --set image.repository=${IMAGE_NAME} ^
+                        --set image.tag=${IMAGE_TAG} ^
+                        --timeout 120s
+                """
 
-        //         // Chờ Argo Rollout hoàn tất blue-green switch
-        //         bat "kubectl argo rollouts status nodejs-app-rollout -n nodejs --timeout 120s || exit 0"
-        //     }
-        //     post {
-        //         success {
-        //             echo "✅ Deploy K8s succeeded (Blue-Green zero-downtime)!"
-        //             bat "kubectl argo rollouts get rollout nodejs-app-rollout -n nodejs"
-        //             bat "kubectl get svc -n nodejs"
-        //             bat "kubectl get ingress -n nodejs"
-        //         }
-        //         failure {
-        //             echo "❌ Deploy K8s FAILED – rolling back to previous revision..."
-        //             // Argo Rollouts undo: quay lại revision trước (không downtime)
-        //             bat "kubectl argo rollouts undo nodejs-app-rollout -n nodejs || exit 0"
-        //         }
-        //     }
-        // }
+                // Chờ Argo Rollout hoàn tất blue-green switch
+                bat "kubectl argo rollouts status nodejs-app-rollout -n nodejs --timeout 120s || exit 0"
+            }
+            post {
+                success {
+                    echo "✅ Deploy K8s succeeded (Blue-Green zero-downtime)!"
+                    bat "kubectl argo rollouts get rollout nodejs-app-rollout -n nodejs"
+                    bat "kubectl get svc -n nodejs"
+                    bat "kubectl get ingress -n nodejs"
+                }
+                failure {
+                    echo "❌ Deploy K8s FAILED – rolling back to previous revision..."
+                    // Argo Rollouts undo: quay lại revision trước (không downtime)
+                    bat "kubectl argo rollouts undo nodejs-app-rollout -n nodejs || exit 0"
+                }
+            }
+        }
 
     } // end stages
 
