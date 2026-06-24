@@ -11,8 +11,6 @@ pipeline {
         // Credential ID lưu trong Jenkins (username = docker hub username, password = docker hub pat/password)
         REGISTRY_CREDS    = "dockerhub"
 
-        // Thêm đường dẫn helm, kubectl vào PATH cho Jenkins Agent
-        PATH = "C:\\Users\\ThanhHai-PC\\AppData\\Local\\Microsoft\\WinGet\\Links;${env.PATH}"
     }
 
     options {
@@ -128,99 +126,99 @@ pipeline {
         }
 
         // ── 5. DEPLOY docker(tắt làm lab k8s)
-        // stage("Deploy") {
-        //     steps {
-        //         echo "Deploying container using docker compose..."
-        //         bat """
-        //             set IMAGE_NAME=${IMAGE_NAME}
-        //             set IMAGE_TAG=${IMAGE_TAG}
-
-        //             REM Kéo image mới về (nếu dùng registry, còn build local thì bỏ qua bước pull)
-        //             REM docker compose pull || exit 0
-
-        //             REM Dừng & xoá container cũ và chạy lại container mới
-        //             docker compose down || exit 0
-        //             docker compose up -d
-
-        //             echo "Container is running with docker compose"
-        //             docker compose ps
-        //         """
-        //     }
-        //     post {
-        //         failure {
-        //             echo "Deploy FAILED – rolling back to previous stable release (latest)..."
-        //             bat """
-        //                 set IMAGE_NAME=${IMAGE_NAME}
-        //                 set IMAGE_TAG=latest
-        //                 docker compose down || exit 0
-        //                 docker compose up -d || exit 0
-        //             """
-        //         }
-        //     }
-        // }
-        // ── 6. PROMOTE TO LATEST (tắt làm lab k8s)
-        // stage("Promote to Latest") {
-        //     steps {
-        //         echo "Deploy succeeded! Tagging current image as 'latest' and pushing..."
-        //         withCredentials([usernamePassword(
-        //             credentialsId: "${REGISTRY_CREDS}",
-        //             usernameVariable: "REG_USER",
-        //             passwordVariable: "REG_PASS"
-        //         )]) {
-        //             bat """
-        //                 echo --- DEBUG CREDENTIALS ---
-        //                 echo USER: [%REG_USER%]
-        //                 echo PASS: [%REG_PASS%]
-        //                 echo -------------------------
-
-        //                 REM Đăng nhập Docker Hub
-        //                 docker login --username %REG_USER% --password %REG_PASS%
-
-        //                 REM Đánh tag latest từ image vừa chạy thành công
-        //                 docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-
-        //                 REM Push latest lên Docker Hub
-        //                 docker push ${IMAGE_NAME}:latest
-
-        //                 docker logout
-        //             """
-        //         }
-        //     }
-        // }
-
-        // ── 7. DEPLOY K8S (Helm + Argo Rollouts Blue-Green) ────────────────
-        stage("Deploy K8s") {
+        stage("Deploy") {
             steps {
-                echo "Deploying to Kubernetes via Helm + Argo Rollouts (Blue-Green, zero-downtime)..."
-
-                // Helm upgrade: lần đầu sẽ install, lần sau chỉ update image tag
-                // Argo Rollouts tự động tạo preview ReplicaSet mới (green)
-                // autoPromotionEnabled=true → tự promote active sau khi green healthy
+                echo "Deploying container using docker compose..."
                 bat """
-                    helm upgrade --install simple-nodejs-app ./helm ^
-                        --namespace nodejs --create-namespace ^
-                        --set image.repository=${IMAGE_NAME} ^
-                        --set image.tag=${IMAGE_TAG} ^
-                        --timeout 120s
-                """
+                    set IMAGE_NAME=${IMAGE_NAME}
+                    set IMAGE_TAG=${IMAGE_TAG}
 
-                // Chờ Argo Rollout hoàn tất blue-green switch
-                bat "kubectl argo rollouts status nodejs-app-rollout -n nodejs --timeout 120s || exit 0"
+                    REM Kéo image mới về (nếu dùng registry, còn build local thì bỏ qua bước pull)
+                    REM docker compose pull || exit 0
+
+                    REM Dừng & xoá container cũ và chạy lại container mới
+                    docker compose down || exit 0
+                    docker compose up -d
+
+                    echo "Container is running with docker compose"
+                    docker compose ps
+                """
             }
             post {
-                success {
-                    echo "✅ Deploy K8s succeeded (Blue-Green zero-downtime)!"
-                    bat "kubectl argo rollouts get rollout nodejs-app-rollout -n nodejs"
-                    bat "kubectl get svc -n nodejs"
-                    bat "kubectl get ingress -n nodejs"
-                }
                 failure {
-                    echo "❌ Deploy K8s FAILED – rolling back to previous revision..."
-                    // Argo Rollouts undo: quay lại revision trước (không downtime)
-                    bat "kubectl argo rollouts undo nodejs-app-rollout -n nodejs || exit 0"
+                    echo "Deploy FAILED – rolling back to previous stable release (latest)..."
+                    bat """
+                        set IMAGE_NAME=${IMAGE_NAME}
+                        set IMAGE_TAG=latest
+                        docker compose down || exit 0
+                        docker compose up -d || exit 0
+                    """
                 }
             }
         }
+        //── 6. PROMOTE TO LATEST (tắt làm lab k8s)
+        stage("Promote to Latest") {
+            steps {
+                echo "Deploy succeeded! Tagging current image as 'latest' and pushing..."
+                withCredentials([usernamePassword(
+                    credentialsId: "${REGISTRY_CREDS}",
+                    usernameVariable: "REG_USER",
+                    passwordVariable: "REG_PASS"
+                )]) {
+                    bat """
+                        echo --- DEBUG CREDENTIALS ---
+                        echo USER: [%REG_USER%]
+                        echo PASS: [%REG_PASS%]
+                        echo -------------------------
+
+                        REM Đăng nhập Docker Hub
+                        docker login --username %REG_USER% --password %REG_PASS%
+
+                        REM Đánh tag latest từ image vừa chạy thành công
+                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+
+                        REM Push latest lên Docker Hub
+                        docker push ${IMAGE_NAME}:latest
+
+                        docker logout
+                    """
+                }
+            }
+        }
+
+        // // ── 7. DEPLOY K8S (Helm + Argo Rollouts Blue-Green) ────────────────
+        // stage("Deploy K8s") {
+        //     steps {
+        //         echo "Deploying to Kubernetes via Helm + Argo Rollouts (Blue-Green, zero-downtime)..."
+
+        //         // Helm upgrade: lần đầu sẽ install, lần sau chỉ update image tag
+        //         // Argo Rollouts tự động tạo preview ReplicaSet mới (green)
+        //         // autoPromotionEnabled=true → tự promote active sau khi green healthy
+        //         bat """
+        //             helm upgrade --install simple-nodejs-app ./helm ^
+        //                 --namespace nodejs --create-namespace ^
+        //                 --set image.repository=${IMAGE_NAME} ^
+        //                 --set image.tag=${IMAGE_TAG} ^
+        //                 --timeout 120s
+        //         """
+
+        //         // Chờ Argo Rollout hoàn tất blue-green switch
+        //         bat "kubectl argo rollouts status nodejs-app-rollout -n nodejs --timeout 120s || exit 0"
+        //     }
+        //     post {
+        //         success {
+        //             echo "✅ Deploy K8s succeeded (Blue-Green zero-downtime)!"
+        //             bat "kubectl argo rollouts get rollout nodejs-app-rollout -n nodejs"
+        //             bat "kubectl get svc -n nodejs"
+        //             bat "kubectl get ingress -n nodejs"
+        //         }
+        //         failure {
+        //             echo "❌ Deploy K8s FAILED – rolling back to previous revision..."
+        //             // Argo Rollouts undo: quay lại revision trước (không downtime)
+        //             bat "kubectl argo rollouts undo nodejs-app-rollout -n nodejs || exit 0"
+        //         }
+        //     }
+        // }
 
     } // end stages
 

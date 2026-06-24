@@ -6,7 +6,7 @@ const port = process.env.PORT || 3000;
 const host = process.env.HOST || 'localhost';
 
 app.get('/', (req, res) => {
-  res.send('Hello World! This is a simple Node.js project.');
+  res.send('Hello World! This is a simple Node.js project. version 1');
 });
 
 app.listen(port, host, () => {
