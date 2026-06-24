@@ -5,7 +5,7 @@ const app = express();
 
 const port = process.env.PORT || 3000;
 const host = process.env.HOST || '0.0.0.0';
-const version = process.env.APP_VERSION || '1.0.0';
+const version = process.env.APP_VERSION || `build-${Date.now()}`;
 
 app.get('/', (req, res) => {
   res.json({
